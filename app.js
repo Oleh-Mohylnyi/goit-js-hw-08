@@ -65,15 +65,17 @@ const galleryItems = [
 ];
 
 const galleryContainerRef = document.querySelector('.js-gallery');
-
+const lightboxDivRef = document.querySelector('.lightbox');
+const lightboxImgRef = document.querySelector('.lightbox__image');
+const closeButtonRef = document.querySelector('[data-action="close-lightbox"]');
+const overlayRef = document.querySelector('.lightbox__overlay');
 
 function createGalleryMarkup(gallery) {
-    return gallery.map(({ preview, original, description }) => {
-        return `
+  return gallery.map(({ preview, original, description }) => {
+    return `
         <li class="gallery__item">
       <a
         class="gallery__link"
-        href=${original}
       >
         <img
           class="gallery__image"
@@ -83,12 +85,72 @@ function createGalleryMarkup(gallery) {
         />
       </a>
     </li>`
-    }).join('');
+  }).join('');
 };
 
 function addMarkupGallery() {
-    const markupGallery = createGalleryMarkup(galleryItems);
-    galleryContainerRef.insertAdjacentHTML('beforebegin', markupGallery);
+  const markupGallery = createGalleryMarkup(galleryItems);
+  galleryContainerRef.insertAdjacentHTML('afterbegin', markupGallery);
+};
+
+addMarkupGallery();
+
+galleryContainerRef.addEventListener('click', onGalleryContainerClick);
+closeButtonRef.addEventListener('click', onCloseModal);
+overlayRef.addEventListener('click', onCloseModal);
+window.addEventListener('keydown', onKeyboard);
+
+let currentImgUrl;
+let currentImgIndex;
+
+function onGalleryContainerClick(event) {
+  if (!event.target.classList.contains('gallery__image')) {
+    return
+  };
+
+  event.stopPropagation();
+  currentImgUrl = event.target.dataset.source;
+
+  for (let i = 0; i < galleryItems.length; i += 1) {
+    if (galleryItems[i].original === currentImgUrl) {
+      currentImgIndex = i;
+    }
+  }
+
+  showlightbox()
+};
+
+function showlightbox() {
+  lightboxDivRef.classList.add('is-open');
+  lightboxImgRef.src = currentImgUrl;
 }
 
-addMarkupGallery()
+function onCloseModal() {
+  lightboxDivRef.classList.remove('is-open');
+  currentImgUrl = '';
+  lightboxImgRef.src = currentImgUrl;
+};
+
+function onKeyboard(event) {
+  if (event.key === "Escape") {
+    onCloseModal();
+  } else if (event.code === 'ArrowRight') {
+    showNextImg()
+  } else if (event.code === 'ArrowLeft') {
+    showPreviousImg()
+  }
+};
+
+function showNextImg() {
+  if (currentImgIndex + 1 < galleryItems.length) {
+    lightboxImgRef.src = galleryItems[currentImgIndex + 1].original;
+    currentImgIndex += 1;
+  }
+}
+
+function showPreviousImg() {
+  if (currentImgIndex - 1 >= 0) {
+    lightboxImgRef.src = galleryItems[currentImgIndex - 1].original;
+    currentImgIndex -= 1;
+  }
+}
